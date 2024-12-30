@@ -2,8 +2,7 @@
   <img
     src="./assets/discord-server-events-logo.png"
     alt="Discord Server Events"
-    width="1024"
-    style="max-width:50%;height:auto;" />
+    width="50%" />
 </p>
 
 # Discord Server Events

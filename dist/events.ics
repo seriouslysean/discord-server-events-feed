@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:adamgibbons/ics
+METHOD:PUBLISH
+X-PUBLISHED-TTL:PT1H
+BEGIN:VEVENT
+UID:jO_7nKeTwMh9dCrbaoyoN
+SUMMARY:D&D Saltmarsh
+DTSTAMP:20241230T035537Z
+DTSTART:20250113T054500Z
+DTEND:20250113T064500Z
+DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk an
+	d get up to no good and we all listen as Justin's voice eventually gives o
+	ut by doing the worst Jason Statham impersonation.
+RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU
+END:VEVENT
+END:VCALENDAR

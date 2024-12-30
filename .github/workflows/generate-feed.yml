@@ -1,0 +1,60 @@
+name: Generate Feed
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: daily-run
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "Daily Run"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Feed
+        id: generate_feed
+        env:
+          DSE_DISCORD_GUILD_ID: ${{ secrets.DSE_DISCORD_GUILD_ID }}
+          DSE_DISCORD_APPLICATION_ID: ${{ secrets.DSE_DISCORD_APPLICATION_ID }}
+          DSE_DISCORD_BOT_TOKEN: ${{ secrets.DSE_DISCORD_BOT_TOKEN }}
+        run: |
+          if npm start; then
+            echo "feed_generated=1" >> $GITHUB_OUTPUT
+          else
+            echo "feed_generated=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure Git
+        if: steps.generate_feed.outputs.feed_generated == '1'
+        run: |
+          git config user.name "Discord Server Events Feed Workflow"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Commit Changes
+        if: steps.generate_feed.outputs.feed_generated == '1'
+        run: |
+          if git diff --quiet dist/events.ics; then
+            echo "No changes to commit.";
+            exit 0;
+          fi
+          git add . && git commit -m "Update feed $(date +'%Y-%m-%d')"
+
+      - name: Publish
+        if: steps.generate_feed.outputs.feed_generated == '1'
+        run: git push origin main

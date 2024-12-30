@@ -1,0 +1,35 @@
+{
+  "name": "discord-server-events-feed",
+  "version": "0.1.0",
+  "description": "A tool that auto-generates server events for Discord by utilizing the API and creating a convenient calendar subscription.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "dotenvx run -- node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/seriouslysean/discord-server-events.git"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript",
+    "calendar",
+    "discord",
+    "ics"
+  ],
+  "author": "Sean Kennedy <sean@codeserious.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/seriouslysean/discord-server-events-feed/issues"
+  },
+  "homepage": "https://github.com/seriouslysean/discord-server-events-feed#readme",
+  "dependencies": {
+    "@dotenvx/dotenvx": "^1.32.0",
+    "ics": "^3.8.1"
+  }
+}

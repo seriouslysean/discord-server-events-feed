@@ -4,6 +4,7 @@ import crypto from 'crypto';
 
 const LINE_BREAK = '\r\n';
 const EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
+const MAX_RRULE_EVENTS = 15; // Limit to 15 occurrences
 const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
 const DISCORD_CALENDAR_NAME = process.env.DSE_DISCORD_CALENDAR_NAME ?? 'Discord Server Events Feed';
 
@@ -28,9 +29,7 @@ export const fetchScheduledEvents = async (guildId, token) => {
 
         if (!response.ok) {
             const errorBody = await response.text();
-            throw new Error(
-                `Error fetching events: ${response.statusText}. Details: ${errorBody}`
-            );
+            throw new Error(`Error fetching events: ${response.statusText}. Details: ${errorBody}`);
         }
 
         const events = await response.json();
@@ -74,67 +73,47 @@ const wordWrap = (heading, content) => {
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date
-        .toISOString()
-        .replace(/[-:]/g, '')
-        .replace(/\.\d+/, '');
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
 };
 
-const calculateUntilDate = (startTime, interval, recurrenceLength = 10) => {
-    const startDate = new Date(startTime);
-    const untilDate = new Date(startDate);
+const generateRruleEvents = (startTime, interval, duration) => {
+    const occurrences = [];
+    let currentStartTime = new Date(startTime);
 
-    // Add recurrence length in weeks
-    untilDate.setFullYear(startDate.getFullYear() + recurrenceLength);
+    for (let i = 0; i < MAX_RRULE_EVENTS; i++) {
+        const startDate = formatDate(currentStartTime.toISOString());
+        const endDate = formatDate(new Date(currentStartTime.getTime() + duration).toISOString());
 
-    // Adjust untilDate to align with the same weekday as startDate
-    const dayOffset = (untilDate.getDay() - startDate.getDay() + 7) % 7;
-    untilDate.setDate(untilDate.getDate() - dayOffset);
+        occurrences.push({ startDate, endDate });
+        currentStartTime.setDate(currentStartTime.getDate() + interval * 7);
+    }
 
-    return formatDate(untilDate.toISOString());
+    return occurrences;
 };
 
-const generateRecurrenceRule = (recurrenceRule, startTime) => {
-    if (!recurrenceRule) return null;
-
-    const { interval = 1, by_weekday = [] } = recurrenceRule;
-    const days = by_weekday.map((day) => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][day]);
-
-    const untilDate = calculateUntilDate(startTime, interval);
-
-    return `RRULE:FREQ=WEEKLY;INTERVAL=${interval};BYDAY=${days.join(',')};UNTIL=${untilDate}`;
-};
-
-const generateEvent = (event) => {
-    const startTime = event.scheduled_start_time;
-    const endTime = event.scheduled_end_time
-        ? event.scheduled_end_time
-        : new Date(new Date(startTime).getTime() + EVENT_DURATION).toISOString();
-
-    const rrule = generateRecurrenceRule(event.recurrence_rule, startTime);
-
-    const startDate = formatDate(startTime);
-    const endDate = formatDate(endTime);
+const generateEvent = (baseEvent, occurrence, index) => {
+    const uid = generateEventUID(
+        occurrence.startDate,
+        occurrence.endDate,
+        baseEvent.name,
+        `${baseEvent.id}-${index}`
+    );
 
     return [
         'BEGIN:VEVENT',
-        `UID:${generateEventUID(startTime, endDate, event.name, event.id)}`,
+        `UID:${uid}`,
         `DTSTAMP:${formatDate(new Date().toISOString())}`,
-        `DTSTART:${startDate}`,
-        `DTEND:${endDate}`,
-        wordWrap('SUMMARY', event.name),
+        `DTSTART:${occurrence.startDate}`,
+        `DTEND:${occurrence.endDate}`,
+        wordWrap('SUMMARY', baseEvent.name),
         wordWrap(
             'DESCRIPTION',
-            event.description?.replace(/\s+/g, ' ') || 'No description provided.'
+            baseEvent.description?.replace(/\s+/g, ' ') || 'No description provided.'
         ),
-        rrule,
         'END:VEVENT',
-    ]
-        .filter(Boolean)
-        .join(LINE_BREAK);
+    ].join(LINE_BREAK);
 };
 
-// https://icalendar.org/RFC-Specifications/iCalendar-RFC-5545/
 export const generateICS = (events) => {
     logger.info('Generating ICS file for', events.length, 'events');
 
@@ -147,7 +126,18 @@ export const generateICS = (events) => {
         `X-WR-CALNAME:${DISCORD_CALENDAR_NAME}`,
         `X-APPLE-CALENDAR-COLOR:${DISCORD_CALENDAR_HEX_COLOR}`,
         'X-PUBLISHED-TTL:PT1H',
-        ...events.map(generateEvent),
+        ...events.flatMap((event) => {
+            const interval = event.recurrence_rule?.interval || 1;
+            const occurrences = generateRruleEvents(
+                event.scheduled_start_time,
+                interval,
+                EVENT_DURATION,
+            );
+
+            return occurrences.map((occurrence, index) =>
+                generateEvent(event, occurrence, index)
+            );
+        }),
         'END:VCALENDAR',
     ].join(LINE_BREAK);
 

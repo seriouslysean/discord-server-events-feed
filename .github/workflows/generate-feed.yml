@@ -41,7 +41,6 @@ jobs:
             echo "feed_generated=0" >> $GITHUB_OUTPUT
           fi
 
-
       - name: Configure Git
         if: steps.generate_feed.outputs.feed_generated == '1'
         run: |
@@ -49,15 +48,18 @@ jobs:
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
       - name: Commit Changes
+        id: commit_changes
         if: steps.generate_feed.outputs.feed_generated == '1'
         run: |
           if git diff --quiet dist/events.ics; then
             echo "No changes to commit."
+            echo "changes_committed=0" >> $GITHUB_OUTPUT
             exit 0
           fi
           git add dist/events.ics
           git commit -m "Update feed $(date +'%Y-%m-%d')"
+          echo "changes_committed=1" >> $GITHUB_OUTPUT
 
       - name: Publish
-        if: steps.generate_feed.outputs.feed_generated == '1'
+        if: steps.commit_changes.outputs.changes_committed == '1'
         run: git push origin main

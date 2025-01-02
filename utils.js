@@ -7,7 +7,6 @@ const LINE_BREAK = '\r\n';
 const EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
 const MAX_RRULE_EVENTS = 15; // Limit to 15 occurrences
 const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
-const DISCORD_CALENDAR_NAME = process.env.DSE_DISCORD_CALENDAR_NAME ?? 'Discord Server Events Feed';
 const DISCORD_BOT_TOKEN = process.env.DSE_DISCORD_BOT_TOKEN;
 
 const discordApiClient = axios.create({
@@ -18,6 +17,8 @@ const discordApiClient = axios.create({
     },
 });
 
+// Cache for server data
+let cachedGuildName = null;
 const channelNameCache = new Map();
 
 export const logger = {
@@ -25,6 +26,23 @@ export const logger = {
     log: (...args) => console.log('[DSEF]', ...args),
     error: (...args) => console.error('[DSEF]', ...args),
     debug: (...args) => console.debug('[DSEF]', ...args),
+};
+
+export const fetchGuildName = async (guildId) => {
+    if (cachedGuildName) {
+        logger.debug(`Guild name for ID ${guildId} found in cache.`);
+        return cachedGuildName;
+    }
+
+    try {
+        const { data } = await discordApiClient.get(`/guilds/${guildId}`);
+        logger.info(`Fetched guild name: ${data.name}`);
+        cachedGuildName = data.name; // Cache the guild name
+        return data.name;
+    } catch (error) {
+        logger.error(`Error fetching guild name for ID ${guildId}:`, error.message);
+        return 'Unknown Server';
+    }
 };
 
 export const fetchChannelName = async (channelId) => {
@@ -130,8 +148,10 @@ const generateEvent = async (baseEvent, occurrence, index) => {
     ].join(LINE_BREAK);
 };
 
-export const generateICS = async (events) => {
+export const generateICS = async (events, guildId) => {
     logger.info('Generating ICS file for', events.length, 'events');
+
+    const guildName = await fetchGuildName(guildId);
 
     const eventContents = await Promise.all(
         events.flatMap(async (event) => {
@@ -154,10 +174,10 @@ export const generateICS = async (events) => {
     return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        `PRODID:-//${DISCORD_CALENDAR_NAME}//EN`,
+        `PRODID:-//${guildName}//EN`,
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
-        `X-WR-CALNAME:${DISCORD_CALENDAR_NAME}`,
+        `X-WR-CALNAME:${guildName}`,
         `X-APPLE-CALENDAR-COLOR:${DISCORD_CALENDAR_HEX_COLOR}`,
         'X-PUBLISHED-TTL:PT1H',
         ...resolvedEventContents,

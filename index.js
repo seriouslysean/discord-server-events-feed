@@ -21,7 +21,7 @@ const main = async () => {
             return;
         }
 
-        const icsContent = await generateICS(events);
+        const icsContent = await generateICS(events, GUILD_ID);
         await saveICSFile(icsContent);
 
         logger.log('ICS file generated and saved successfully.');

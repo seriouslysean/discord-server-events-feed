@@ -4,6 +4,8 @@ import crypto from 'crypto';
 
 const LINE_BREAK = '\r\n';
 const EVENT_DURATION = 4 * 60 * 60 * 1000;
+const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
+const DISCORD_CALENDAR_NAME = process.env.DSE_DISCORD_CALENDAR_NAME ?? 'Discord Server Events Feed';
 
 export const fetchScheduledEvents = async (guildId, token) => {
   const url = `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`;
@@ -53,18 +55,22 @@ const wordWrap = (heading, content) => {
   return segments.join(continuationPrefix).trimEnd();
 };
 
-const formatDate = dateString => (
-  dateString.replace(/[-:.]/g, '').split('+')[0].slice(0, 15) + 'Z'
-);
+const formatDate = dateString => {
+  const date = new Date(dateString);
+  return date.toISOString()
+    .replace(/[-:.]/g, '')
+    .replace(/\.\d+/, '')
+    .replace(/Z$/, '') + 'Z';
+};
 
 const generateEvent = event => {
   const endTime = event.scheduled_end_time ??
     new Date(new Date(event.scheduled_start_time).getTime() + EVENT_DURATION).toISOString();
 
   const rrule = event.recurrence_rule && (() => {
-    const { interval, by_weekday, start } = event.recurrence_rule;
+    const { frequency, by_weekday } = event.recurrence_rule;
     const days = by_weekday?.map(day => ['SU','MO','TU','WE','TH','FR','SA'][day]) ?? [];
-    return `RRULE:FREQ=WEEKLY;INTERVAL=${interval};BYDAY=${days.join(',')};DTSTART=${formatDate(start)}`;
+    return `RRULE:FREQ=WEEKLY;INTERVAL=${frequency};BYDAY=${days.join(',')}`;
   })();
 
   return [
@@ -83,11 +89,11 @@ const generateEvent = event => {
 export const generateICS = events => [
   'BEGIN:VCALENDAR',
   'VERSION:2.0',
-  'PRODID:-//Discord Server Events Feed//EN',
+  `PRODID:-//${DISCORD_CALENDAR_NAME}//EN`,
   'CALSCALE:GREGORIAN',
   'METHOD:PUBLISH',
-  'X-WR-CALNAME:Discord Server Events',
-  'X-APPLE-CALENDAR-COLOR:#6D87BE',
+  `X-WR-CALNAME:${DISCORD_CALENDAR_NAME}`,
+  `X-APPLE-CALENDAR-COLOR:${DISCORD_CALENDAR_HEX_COLOR}`,
   'X-PUBLISHED-TTL:PT1H',
   ...events.map(generateEvent),
   'END:VCALENDAR'

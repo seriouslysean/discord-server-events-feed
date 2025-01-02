@@ -82,10 +82,14 @@ const formatDate = (dateString) => {
 
 const calculateUntilDate = (startTime, interval, recurrenceLength = 10) => {
     const startDate = new Date(startTime);
+    const untilDate = new Date(startDate);
 
-    const untilDate = new Date(
-        startDate.getTime() + interval * 7 * 24 * 60 * 60 * 1000 * (recurrenceLength * 52 / interval)
-    );
+    // Add recurrence length in weeks
+    untilDate.setFullYear(startDate.getFullYear() + recurrenceLength);
+
+    // Adjust untilDate to align with the same weekday as startDate
+    const dayOffset = (untilDate.getDay() - startDate.getDay() + 7) % 7;
+    untilDate.setDate(untilDate.getDate() - dayOffset);
 
     return formatDate(untilDate.toISOString());
 };

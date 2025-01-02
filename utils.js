@@ -3,6 +3,8 @@ import path from 'path';
 import crypto from 'crypto';
 
 const LINE_BREAK = '\r\n';
+// 3 hours in seconds
+const EVENT_DURATION = (60 * 60 * 1000) * 3;
 
 export const fetchScheduledEvents = async (guildId, token) => {
     const url = `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`;
@@ -57,7 +59,7 @@ const generateEvent = (event) => {
     };
 
     const endTime = event.scheduled_end_time ||
-        new Date(new Date(event.scheduled_start_time).getTime() + 60 * 60 * 1000).toISOString();
+        new Date(new Date(event.scheduled_start_time).getTime() + EVENT_DURATION).toISOString();
 
     let rrule = '';
     if (event.recurrence_rule) {

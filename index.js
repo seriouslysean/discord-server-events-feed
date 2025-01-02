@@ -2,7 +2,10 @@ import { fetchScheduledEvents, generateICS, logger, saveICSFile } from './utils.
 
 const GUILD_ID = process.env.DSE_DISCORD_GUILD_ID;
 const APP_ID = process.env.DSE_DISCORD_APPLICATION_ID;
-const BOT_PERMISSIONS = process.env.DSE_DISCORD_BOT_PERMISSIONS;
+// Requires "View Channels" and "Manage Events" permissions
+// Use the bot permission calculator to generate the value, or see
+// https://discord.com/developers/docs/topics/permissions#permissions
+const BOT_PERMISSIONS = 8589935616;
 
 if (!GUILD_ID || !APP_ID || !BOT_PERMISSIONS) {
     logger.error('Missing required environment variables');

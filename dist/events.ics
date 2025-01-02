@@ -8,13 +8,13 @@ X-APPLE-CALENDAR-COLOR:#6D87BE
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
 UID:5fd6bd43@discord-events
-DTSTAMP:20250102T175658Z
+DTSTAMP:20250102T181019Z
 DTSTART:20250113T004500Z
 DTEND:20250113T044500Z
 SUMMARY:D&D Saltmarsh
 DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk
- and get up to no good and we all listen as Justin's voice eventually gives
- out by doing the worst Jason Statham impersonation.
-RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU
+ and get up to no good and we all listen as Justin's voice eventually
+ gives out by doing the worst Jason Statham impersonation.
+RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU;UNTIL=20350113T004500Z
 END:VEVENT
 END:VCALENDAR

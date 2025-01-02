@@ -35,7 +35,7 @@ jobs:
           DSE_DISCORD_BOT_TOKEN: ${{ secrets.DSE_DISCORD_BOT_TOKEN }}
           DSE_DISCORD_CALENDAR_HEX_COLOR: ${{ secrets.DSE_DISCORD_CALENDAR_HEX_COLOR }}
         run: |
-          if npm start; then
+          if npm run generate:feed; then
             echo "feed_generated=1" >> $GITHUB_OUTPUT
           else
             echo "feed_generated=0" >> $GITHUB_OUTPUT

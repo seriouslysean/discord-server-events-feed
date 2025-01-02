@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "dotenvx run -- node ./src/index.js",
+    "start": "dotenvx run -- npm run generate:feed",
+    "generate:feed": "node ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

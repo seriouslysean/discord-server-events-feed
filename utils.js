@@ -54,50 +54,40 @@ const generateEventUID = (start, end, title, id) => {
 };
 
 const wordWrap = (heading, content) => {
-    const maxLineLength = 75;
-    const contentWords = (content || '').split(/\s+/);
-    let lines = [`${heading}:`];
-    let currentLine = '';
+    const lineLength = 75;
+    const continuationPrefix = `${LINE_BREAK} `;
+    const continuationLineLength = lineLength - continuationPrefix.length;
+    const combinedContent = `${heading}:${content}`;
 
-    for (const word of contentWords) {
-        const tempLine = currentLine ? `${currentLine} ${word}` : word;
-        if (tempLine.length <= maxLineLength - (lines.length === 1 ? 0 : 1)) {
-            currentLine = tempLine;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
+    const segments = [];
+    segments.push(combinedContent.substring(0, lineLength));
+
+    let index = lineLength;
+    while (index < combinedContent.length) {
+        segments.push(
+            combinedContent.substring(index, index + continuationLineLength),
+        );
+        index += continuationLineLength;
     }
-    if (currentLine) lines.push(currentLine);
 
-    return lines.join(`${LINE_BREAK} `).trimEnd();
+    return segments.join(continuationPrefix).trimEnd();
 };
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const formatted = date
+    return date
         .toISOString()
         .replace(/[-:]/g, '')
-        .replace(/\.\d+/, '');
-    logger.debug('Formatted date:', dateString, 'to:', formatted);
-    return formatted;
+        .replace(/\.\d+/, '')
+        .replace(/Z$/, 'Z'); // Ensure single Z
 };
 
-const generateRecurrenceRule = (recurrenceRule, startDate) => {
+const generateRecurrenceRule = (recurrenceRule) => {
     if (!recurrenceRule) return null;
 
-    const { interval = 1, by_weekday = [] } = recurrenceRule;
-    const days = by_weekday.map((day) => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][day]);
-
-    logger.debug('Generating recurrence rule with interval:', interval, 'days:', days);
-
-    const untilDate = formatDate(
-        new Date(new Date(startDate).getTime() + 10 * 365 * 24 * 60 * 60 * 1000) // 10 years from start
-    );
-
-    const rule = `RRULE:FREQ=WEEKLY;INTERVAL=${interval};BYDAY=${days.join(',')};UNTIL=${untilDate}`;
-    logger.debug('Generated rule:', rule);
-    return rule;
+    const { frequency, by_weekday } = recurrenceRule;
+    const days = by_weekday?.map(day => ['SU','MO','TU','WE','TH','FR','SA'][day]) ?? [];
+    return `RRULE:FREQ=WEEKLY;INTERVAL=${frequency};BYDAY=${days.join(',')}`;
 };
 
 const generateEvent = (event) => {

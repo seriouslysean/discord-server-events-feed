@@ -91,11 +91,11 @@ export const generateICS = (events) => [
 ].join(LINE_BREAK);
 
 export const saveICSFile = async (icsContent) => {
-    const publicDir = path.resolve('public');
-    const filePath = path.join(publicDir, 'events.ics');
+    const distDir = path.resolve('dist');
+    const filePath = path.join(distDir, 'events.ics');
 
     try {
-        await fs.mkdir(publicDir, { recursive: true });
+        await fs.mkdir(distDir, { recursive: true });
         await fs.writeFile(filePath, icsContent);
         console.log(`ICS file saved to ${filePath}`);
     } catch (error) {

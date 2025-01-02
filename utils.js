@@ -3,8 +3,6 @@ import path from 'path';
 import crypto from 'crypto';
 
 const LINE_BREAK = '\r\n';
-// 3 hours in seconds
-const EVENT_DURATION = (60 * 60 * 1000) * 3;
 
 export const fetchScheduledEvents = async (guildId, token) => {
     const url = `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`;
@@ -59,13 +57,13 @@ const generateEvent = (event) => {
     };
 
     const endTime = event.scheduled_end_time ||
-        new Date(new Date(event.scheduled_start_time).getTime() + EVENT_DURATION).toISOString();
+        new Date(new Date(event.scheduled_start_time).getTime() + 60 * 60 * 1000).toISOString();
 
     let rrule = '';
     if (event.recurrence_rule) {
         const { interval, by_weekday } = event.recurrence_rule;
         const days = by_weekday?.map(day => ['SU','MO','TU','WE','TH','FR','SA'][day]) || [];
-        rrule = `RRULE:FREQ=WEEKLY;INTERVAL=${interval || 1}${days.length ? `;BYDAY=${days.join(',')}` : ''}`;
+        rrule = `RRULE:FREQ=WEEKLY;INTERVAL=${interval};BYDAY=${days.join(',')}`;
     }
 
     return [
@@ -84,11 +82,9 @@ const generateEvent = (event) => {
 export const generateICS = (events) => [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Discord Events Calendar//EN',
+    'PRODID:-//Discord Server Events Feed//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Discord Server Events',
-    'X-APPLE-CALENDAR-COLOR:#6D87BE',
     'X-PUBLISHED-TTL:PT1H',
     ...events.map(event => generateEvent(event)),
     'END:VCALENDAR'

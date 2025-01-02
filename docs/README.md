@@ -27,7 +27,7 @@ Discord doesn’t provide a built-in way to subscribe to server events in extern
      - `Manage Events`
    - Use this URL to invite the bot to your server, replacing `<YOUR_APPLICATION_ID>` with your Client ID:
      ```
-     https://discord.com/oauth2/authorize?client_id=<YOUR_APPLICATION_ID>&permissions=1049600&scope=bot
+     https://discord.com/oauth2/authorize?client_id=<YOUR_APPLICATION_ID>&permissions=8589935616&scope=bot
      ```
 
 ### 4. **Configure Environment Variables**

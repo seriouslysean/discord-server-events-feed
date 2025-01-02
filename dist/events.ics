@@ -3,18 +3,14 @@ VERSION:2.0
 PRODID:-//Direwind//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:Direwind
-X-APPLE-CALENDAR-COLOR:#6D87BE
-X-PUBLISHED-TTL:PT1H
+X-WR-CALNAME:Direwind (Test)
 BEGIN:VEVENT
 UID:5fd6bd43@discord-events
 DTSTAMP:20250102T181019Z
-DTSTART:20250113T004500Z
-DTEND:20250113T044500Z
+DTSTART:20250112T194500Z
+DTEND:20250112T234500Z
 SUMMARY:D&D Saltmarsh
-DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk
- and get up to no good and we all listen as Justin's voice eventually
- gives out by doing the worst Jason Statham impersonation.
-RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU;UNTIL=20350113T004500Z
+DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk and get up to no good and we all listen as Justin's voice eventually gives out by doing the worst Jason Statham impersonation.
+RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU;UNTIL=20350112T194500Z
 END:VEVENT
 END:VCALENDAR

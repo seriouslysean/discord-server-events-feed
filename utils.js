@@ -10,7 +10,7 @@ const DISCORD_CALENDAR_NAME = process.env.DSE_DISCORD_CALENDAR_NAME ?? 'Discord 
 const logger = {
     info: (...args) => console.log('[DSEF]', ...args),
     error: (...args) => console.error('[DSEF]', ...args),
-    debug: (...args) => console.debug('[DSEF]', ...args)
+    debug: (...args) => console.debug('[DSEF]', ...args),
 };
 
 export const fetchScheduledEvents = async (guildId, token) => {
@@ -54,23 +54,22 @@ const generateEventUID = (start, end, title, id) => {
 };
 
 const wordWrap = (heading, content) => {
-    const lineLength = 75;
+    const maxLineLength = 75;
     const continuationPrefix = `${LINE_BREAK} `;
-    const continuationLineLength = lineLength - continuationPrefix.length;
     const combinedContent = `${heading}:${content}`;
+    const lines = [];
 
-    const segments = [];
-    segments.push(combinedContent.substring(0, lineLength));
+    let currentLine = combinedContent.slice(0, maxLineLength);
+    lines.push(currentLine);
 
-    let index = lineLength;
+    let index = maxLineLength;
     while (index < combinedContent.length) {
-        segments.push(
-            combinedContent.substring(index, index + continuationLineLength),
-        );
-        index += continuationLineLength;
+        currentLine = combinedContent.slice(index, index + maxLineLength - 1);
+        lines.push(currentLine);
+        index += maxLineLength - 1;
     }
 
-    return segments.join(continuationPrefix).trimEnd();
+    return lines.join(continuationPrefix).trim();
 };
 
 const formatDate = (dateString) => {
@@ -78,21 +77,31 @@ const formatDate = (dateString) => {
     return date
         .toISOString()
         .replace(/[-:]/g, '')
-        .replace(/\.\d+/, '')
-        .replace(/Z$/, 'Z'); // Ensure single Z
+        .replace(/\.\d+/, '');
 };
 
-const generateRecurrenceRule = (recurrenceRule) => {
+const calculateUntilDate = (startTime, interval, recurrenceLength = 10) => {
+    const startDate = new Date(startTime);
+
+    const untilDate = new Date(
+        startDate.getTime() + interval * 7 * 24 * 60 * 60 * 1000 * (recurrenceLength * 52 / interval)
+    );
+
+    return formatDate(untilDate.toISOString());
+};
+
+const generateRecurrenceRule = (recurrenceRule, startTime) => {
     if (!recurrenceRule) return null;
 
-    const { frequency, by_weekday } = recurrenceRule;
-    const days = by_weekday?.map(day => ['SU','MO','TU','WE','TH','FR','SA'][day]) ?? [];
-    return `RRULE:FREQ=WEEKLY;INTERVAL=${frequency};BYDAY=${days.join(',')}`;
+    const { interval = 1, by_weekday = [] } = recurrenceRule;
+    const days = by_weekday.map((day) => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][day]);
+
+    const untilDate = calculateUntilDate(startTime, interval);
+
+    return `RRULE:FREQ=WEEKLY;INTERVAL=${interval};BYDAY=${days.join(',')};UNTIL=${untilDate}`;
 };
 
 const generateEvent = (event) => {
-    logger.debug('Generating event for:', event.name);
-
     const startTime = event.scheduled_start_time;
     const endTime = event.scheduled_end_time
         ? event.scheduled_end_time
@@ -103,7 +112,7 @@ const generateEvent = (event) => {
     const startDate = formatDate(startTime);
     const endDate = formatDate(endTime);
 
-    const eventContent = [
+    return [
         'BEGIN:VEVENT',
         `UID:${generateEventUID(startTime, endDate, event.name, event.id)}`,
         `DTSTAMP:${formatDate(new Date().toISOString())}`,
@@ -119,11 +128,9 @@ const generateEvent = (event) => {
     ]
         .filter(Boolean)
         .join(LINE_BREAK);
-
-    logger.debug('Generated event content:', eventContent);
-    return eventContent;
 };
 
+// https://icalendar.org/RFC-Specifications/iCalendar-RFC-5545/
 export const generateICS = (events) => {
     logger.info('Generating ICS file for', events.length, 'events');
 

@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/seriouslysean/discord-server-events-feed#readme",
   "dependencies": {
-    "@dotenvx/dotenvx": "^1.32.0"
+    "@dotenvx/dotenvx": "^1.32.0",
+    "axios": "^1.7.9"
   }
 }

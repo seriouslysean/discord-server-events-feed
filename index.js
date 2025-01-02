@@ -1,31 +1,33 @@
-import { fetchScheduledEvents, generateICS, saveICSFile } from './utils.js';
+import { fetchScheduledEvents, generateICS, logger, saveICSFile } from './utils.js';
 
 const GUILD_ID = process.env.DSE_DISCORD_GUILD_ID;
 const APP_ID = process.env.DSE_DISCORD_APPLICATION_ID;
-const BOT_TOKEN = process.env.DSE_DISCORD_BOT_TOKEN;
+const BOT_PERMISSIONS = process.env.DSE_DISCORD_BOT_PERMISSIONS;
 
-if (!GUILD_ID || !APP_ID || !BOT_TOKEN) {
-    console.error('Missing required environment variables');
+if (!GUILD_ID || !APP_ID || !BOT_PERMISSIONS) {
+    logger.error('Missing required environment variables');
     process.exit(1);
 }
 
 const main = async () => {
-    const events = await fetchScheduledEvents(GUILD_ID, BOT_TOKEN);
+    try {
+        const events = await fetchScheduledEvents(GUILD_ID);
 
-    if (events.length === 0) {
-        console.log('No events found to process.');
-        return;
+        if (events.length === 0) {
+            logger.log('No events found to process.');
+            return;
+        }
+
+        const icsContent = await generateICS(events);
+        await saveICSFile(icsContent);
+
+        logger.log('ICS file generated and saved successfully.');
+        logger.log(
+            `Add the bot to the server using: https://discord.com/oauth2/authorize?client_id=${APP_ID}&permissions=${BOT_PERMISSIONS}&scope=bot`
+        );
+    } catch (error) {
+        logger.error('Error in main execution flow:', error.message);
     }
-
-    const icsContent = generateICS(events);
-    await saveICSFile(icsContent);
-
-    console.log('Make sure to add the bot to the server!');
-    console.log(
-        `https://discord.com/oauth2/authorize?client_id=${APP_ID}&permissions=8589934592&scope=bot`
-    );
 };
 
-main().catch((error) => {
-    console.error('Error in main execution flow:', error);
-});
+main();

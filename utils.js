@@ -1,56 +1,66 @@
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import axios from 'axios';
 
 const LINE_BREAK = '\r\n';
 const EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
 const MAX_RRULE_EVENTS = 15; // Limit to 15 occurrences
 const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
 const DISCORD_CALENDAR_NAME = process.env.DSE_DISCORD_CALENDAR_NAME ?? 'Discord Server Events Feed';
+const DISCORD_BOT_TOKEN = process.env.DSE_DISCORD_BOT_TOKEN;
 
-const logger = {
-    info: (...args) => console.log('[DSEF]', ...args),
+const discordApiClient = axios.create({
+    baseURL: 'https://discord.com/api/v10',
+    headers: {
+        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+    },
+});
+
+const channelNameCache = new Map();
+
+export const logger = {
+    info: (...args) => console.info('[DSEF]', ...args),
+    log: (...args) => console.log('[DSEF]', ...args),
     error: (...args) => console.error('[DSEF]', ...args),
     debug: (...args) => console.debug('[DSEF]', ...args),
 };
 
-export const fetchScheduledEvents = async (guildId, token) => {
-    const url = `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`;
-    logger.debug('Fetching events from:', url);
+export const fetchChannelName = async (channelId) => {
+    if (channelNameCache.has(channelId)) {
+        logger.debug(`Channel name for ID ${channelId} found in cache.`);
+        return channelNameCache.get(channelId);
+    }
 
     try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bot ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`Error fetching events: ${response.statusText}. Details: ${errorBody}`);
-        }
-
-        const events = await response.json();
-        logger.info(`Fetched ${events.length} events`);
-        logger.debug('Events:', events);
-        return events;
+        const { data } = await discordApiClient.get(`/channels/${channelId}`);
+        logger.info(`Fetched channel name: ${data.name}`);
+        channelNameCache.set(channelId, data.name);
+        return data.name;
     } catch (error) {
-        logger.error('Error fetching events:', error);
+        logger.error(`Error fetching channel name for ID ${channelId}:`, error.message);
+        return 'Unknown Channel';
+    }
+};
+
+export const fetchScheduledEvents = async (guildId) => {
+    try {
+        const { data } = await discordApiClient.get(`/guilds/${guildId}/scheduled-events`);
+        logger.info(`Fetched ${data.length} events`);
+        return data;
+    } catch (error) {
+        logger.error('Error fetching events:', error.message);
         return [];
     }
 };
 
-const generateEventUID = (start, end, title, id) => {
-    const uid = `${crypto
+const generateEventUID = (start, end, title, id) =>
+    `${crypto
         .createHash('md5')
         .update(`${start}${end}${title}${id}`)
         .digest('hex')
         .slice(0, 8)}@discord-events`;
-    logger.debug('Generated UID:', uid);
-    return uid;
-};
 
 const wordWrap = (heading, content) => {
     const maxLineLength = 75;
@@ -91,13 +101,17 @@ const generateRruleEvents = (startTime, interval, duration) => {
     return occurrences;
 };
 
-const generateEvent = (baseEvent, occurrence, index) => {
+const generateEvent = async (baseEvent, occurrence, index) => {
     const uid = generateEventUID(
         occurrence.startDate,
         occurrence.endDate,
         baseEvent.name,
         `${baseEvent.id}-${index}`
     );
+
+    const channelName = await fetchChannelName(baseEvent.channel_id);
+    const location = `Channel: ${channelName}`;
+    const url = `https://discord.com/channels/${baseEvent.guild_id}/${baseEvent.channel_id}`;
 
     return [
         'BEGIN:VEVENT',
@@ -110,14 +124,34 @@ const generateEvent = (baseEvent, occurrence, index) => {
             'DESCRIPTION',
             baseEvent.description?.replace(/\s+/g, ' ') || 'No description provided.'
         ),
+        wordWrap('LOCATION', location),
+        wordWrap('URL', url),
         'END:VEVENT',
     ].join(LINE_BREAK);
 };
 
-export const generateICS = (events) => {
+export const generateICS = async (events) => {
     logger.info('Generating ICS file for', events.length, 'events');
 
-    const icsContent = [
+    const eventContents = await Promise.all(
+        events.flatMap(async (event) => {
+            const interval = event.recurrence_rule?.interval || 1;
+            const occurrences = generateRruleEvents(
+                event.scheduled_start_time,
+                interval,
+                EVENT_DURATION
+            );
+
+            return Promise.all(
+                occurrences.map((occurrence, index) =>
+                    generateEvent(event, occurrence, index)
+                )
+            );
+        })
+    );
+
+    const resolvedEventContents = eventContents.flat();
+    return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         `PRODID:-//${DISCORD_CALENDAR_NAME}//EN`,
@@ -126,23 +160,9 @@ export const generateICS = (events) => {
         `X-WR-CALNAME:${DISCORD_CALENDAR_NAME}`,
         `X-APPLE-CALENDAR-COLOR:${DISCORD_CALENDAR_HEX_COLOR}`,
         'X-PUBLISHED-TTL:PT1H',
-        ...events.flatMap((event) => {
-            const interval = event.recurrence_rule?.interval || 1;
-            const occurrences = generateRruleEvents(
-                event.scheduled_start_time,
-                interval,
-                EVENT_DURATION,
-            );
-
-            return occurrences.map((occurrence, index) =>
-                generateEvent(event, occurrence, index)
-            );
-        }),
+        ...resolvedEventContents,
         'END:VCALENDAR',
     ].join(LINE_BREAK);
-
-    logger.debug('Generated ICS content:', icsContent);
-    return icsContent;
 };
 
 export const saveICSFile = async (icsContent) => {
@@ -150,16 +170,11 @@ export const saveICSFile = async (icsContent) => {
     const filePath = path.join(distDir, 'events.ics');
 
     try {
-        logger.debug('Creating directory:', distDir);
         await fs.mkdir(distDir, { recursive: true });
-
-        logger.debug('Writing file to:', filePath);
         await fs.writeFile(filePath, icsContent);
-
         logger.info('ICS file saved successfully');
-        logger.debug('File location:', filePath);
     } catch (error) {
-        logger.error('Error saving ICS file:', error);
+        logger.error('Error saving ICS file:', error.message);
         throw error;
     }
 };

@@ -85,6 +85,8 @@ export const generateICS = (events) => [
     'PRODID:-//Discord Events Calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+    'X-WR-CALNAME:Discord Server Events',
+    'X-APPLE-CALENDAR-COLOR:#6D87BE',
     'X-PUBLISHED-TTL:PT1H',
     ...events.map(event => generateEvent(event)),
     'END:VCALENDAR'

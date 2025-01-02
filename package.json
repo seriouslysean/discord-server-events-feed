@@ -1,11 +1,11 @@
 {
   "name": "discord-server-events-feed",
-  "version": "0.1.0",
-  "description": "A tool that auto-generates server events for Discord by utilizing the API and creating a convenient calendar subscription.",
-  "main": "index.js",
+  "version": "1.0.0",
+  "description": "A simple utility to generate an ICS file for scheduled events in a Discord server.",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "dotenvx run -- node index.js",
+    "start": "dotenvx run -- node ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

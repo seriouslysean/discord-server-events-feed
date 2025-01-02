@@ -13,10 +13,10 @@ I created this because there currently isn't a way to subcribe to a calendar fee
 
 ## Subscribe to Calendar
 
-Add the [ICS file](https://seriouslysean.github.io/discord-server-events/dist/events.ics) to your calendar app.
+Add the [ICS file](https://seriouslysean.github.io/discord-server-events-feed/events.ics) to your calendar app.
 
 ```
-https://seriouslysean.github.io/discord-server-events/dist/events.ics
+https://seriouslysean.github.io/discord-server-events-feed/events.ics
 ```
 
 ## References

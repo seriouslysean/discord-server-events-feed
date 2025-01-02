@@ -49,7 +49,7 @@ jobs:
       - name: Commit Changes
         if: steps.generate_feed.outputs.feed_generated == '1'
         run: |
-          if git diff --quiet dist/events.ics; then
+          if git diff --quiet public/events.ics; then
             echo "No changes to commit.";
             exit 0;
           fi

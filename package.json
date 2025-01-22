@@ -1,6 +1,6 @@
 {
   "name": "discord-server-events-feed",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple utility to generate an ICS file for scheduled events in a Discord server.",
   "main": "src/index.js",
   "type": "module",

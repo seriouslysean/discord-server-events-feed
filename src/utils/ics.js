@@ -101,7 +101,7 @@ const generateEvent = (event, occurrence, index, channelName, guildId) => {
         return [
             'BEGIN:VEVENT',
             `UID:${uid}`,
-            `DTSTAMP:${formatDateToICS(new Date())}`,
+            `DTSTAMP:${occurrence.startDate}`,
             `DTSTART:${occurrence.startDate}`,
             `DTEND:${occurrence.endDate}`,
             `SUMMARY:${event.name}`,

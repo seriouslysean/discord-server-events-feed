@@ -1,9 +1,9 @@
 name: Generate Feed
 
 on:
-  # Every Sunday at midnight
+  # Midnight on Monday and Thursday
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * 1,4'
   workflow_dispatch:
 
 permissions:

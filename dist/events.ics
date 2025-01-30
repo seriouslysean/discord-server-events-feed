@@ -37,20 +37,20 @@ LOCATION:Channel: dnd-chat
 URL:https://discord.com/channels/155473422602731520/983144560555327590
 END:VEVENT
 BEGIN:VEVENT
-UID:b2391a15@discord-events
-DTSTAMP:20250128T004500Z
-DTSTART:20250128T004500Z
-DTEND:20250128T044500Z
+UID:db3343ea@discord-events
+DTSTAMP:20250127T004500Z
+DTSTART:20250127T004500Z
+DTEND:20250127T044500Z
 SUMMARY:D&D Saltmarsh
 DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk and get up to no good and we all listen as Justin's voice eventually gives out by doing the worst Jason Statham impersonation.
 LOCATION:Channel: dnd-chat
 URL:https://discord.com/channels/155473422602731520/983144560555327590
 END:VEVENT
 BEGIN:VEVENT
-UID:3997b1c6@discord-events
-DTSTAMP:20250210T004500Z
-DTSTART:20250210T004500Z
-DTEND:20250210T044500Z
+UID:474a651a@discord-events
+DTSTAMP:20250211T004500Z
+DTSTART:20250211T004500Z
+DTEND:20250211T044500Z
 SUMMARY:D&D Saltmarsh
 DESCRIPTION:Bi-weekly D&D session as the Saltsworn trek through Greyhawk and get up to no good and we all listen as Justin's voice eventually gives out by doing the worst Jason Statham impersonation.
 LOCATION:Channel: dnd-chat

@@ -67,10 +67,10 @@ LOCATION:Channel: dnd-chat
 URL:https://discord.com/channels/155473422602731520/983144560555327590
 END:VEVENT
 BEGIN:VEVENT
-UID:3375861e@discord-events
-DTSTAMP:20250616T234500Z
-DTSTART:20250616T234500Z
-DTEND:20250617T034500Z
+UID:35a103bb@discord-events
+DTSTAMP:20250615T234500Z
+DTSTART:20250615T234500Z
+DTEND:20250616T034500Z
 SUMMARY:D&D Session
 DESCRIPTION:Bi-weekly D&D session. We all listen as Justin's voice eventually gives out by doing the worst Jason Statham impersonation.
 LOCATION:Channel: dnd-chat

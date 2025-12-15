@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { logger } from './logger.js';
 
 const LINE_BREAK = '\r\n';
-const EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
+const DEFAULT_EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
 const MAX_RRULE_EVENTS = 15; // Limit to 15 occurrences
 const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
 
@@ -15,15 +15,53 @@ const formatDateToICS = (date) => {
 const generateRruleEvents = (event) => {
     try {
         const occurrences = [];
+        
+        // Calculate duration for this specific event
+        const startTime = new Date(event.scheduled_start_time).getTime();
+        const endTime = event.scheduled_end_time ? new Date(event.scheduled_end_time).getTime() : null;
+        const duration = endTime ? (endTime - startTime) : DEFAULT_EVENT_DURATION;
+
+        // Handle one-off events
+        if (!event.recurrence_rule) {
+            const start = new Date(event.scheduled_start_time);
+            const end = new Date(start.getTime() + duration);
+            return [{
+                startDate: formatDateToICS(start),
+                endDate: formatDateToICS(end),
+                isException: false
+            }];
+        }
+
         let currentStartTime = new Date(event.recurrence_rule.start);
 
         // Calculate the ending time for our 15 event window
         // We need to generate enough regular dates to account for exceptions
         const regularOccurrences = [];
+        const frequency = event.recurrence_rule.frequency;
+        const interval = event.recurrence_rule.interval || 1;
+
         while (regularOccurrences.length < MAX_RRULE_EVENTS) {
             regularOccurrences.push(new Date(currentStartTime));
             const nextDate = new Date(currentStartTime);
-            nextDate.setUTCDate(nextDate.getUTCDate() + (event.recurrence_rule?.interval || 1) * 7);
+            
+            // 0: Yearly, 1: Monthly, 2: Weekly, 3: Daily
+            switch (frequency) {
+                case 0: // Yearly
+                    nextDate.setUTCFullYear(nextDate.getUTCFullYear() + interval);
+                    break;
+                case 1: // Monthly
+                    nextDate.setUTCMonth(nextDate.getUTCMonth() + interval);
+                    break;
+                case 2: // Weekly
+                    nextDate.setUTCDate(nextDate.getUTCDate() + (interval * 7));
+                    break;
+                case 3: // Daily
+                    nextDate.setUTCDate(nextDate.getUTCDate() + interval);
+                    break;
+                default: // Default to weekly if unknown
+                    nextDate.setUTCDate(nextDate.getUTCDate() + (interval * 7));
+            }
+            
             currentStartTime = nextDate;
         }
 
@@ -56,7 +94,7 @@ const generateRruleEvents = (event) => {
             if (exception) {
                 // Use the exception time
                 const exceptionStart = new Date(exception.scheduled_start_time);
-                const exceptionEnd = new Date(exceptionStart.getTime() + EVENT_DURATION);
+                const exceptionEnd = new Date(exceptionStart.getTime() + duration);
                 occurrences.push({
                     startDate: formatDateToICS(exceptionStart),
                     endDate: formatDateToICS(exceptionEnd),
@@ -65,7 +103,7 @@ const generateRruleEvents = (event) => {
                 });
             } else {
                 // Use the regular occurrence
-                const endDate = new Date(regularDate.getTime() + EVENT_DURATION);
+                const endDate = new Date(regularDate.getTime() + duration);
                 occurrences.push({
                     startDate: formatDateToICS(regularDate),
                     endDate: formatDateToICS(endDate),
@@ -87,9 +125,15 @@ const generateEventUID = (start, end, title, id) => {
     return `${crypto.createHash('md5').update(`${start}${end}${title}${id}`).digest('hex').slice(0, 8)}@discord-events`;
 };
 
-const generateEvent = (event, occurrence, index, channelName, guildId) => {
+const generateEvent = (event, occurrence, index, channels, guildId) => {
     try {
-        const location = `Channel: ${channelName}`;
+        let location = '';
+        if (event.entity_metadata?.location) {
+            location = event.entity_metadata.location;
+        } else if (event.channel_id) {
+            location = `Channel: ${channels[event.channel_id] || 'Unknown Channel'}`;
+        }
+
         const url = `https://discord.com/channels/${guildId}/${event.channel_id}`;
         const uid = generateEventUID(
             occurrence.startDate,
@@ -115,13 +159,13 @@ const generateEvent = (event, occurrence, index, channelName, guildId) => {
     }
 };
 
-export const generateICS = async ({ events, guildId, guildName, channelName }) => {
+export const generateICS = async ({ events, guildId, guildName, channels }) => {
     try {
         // Generate all events with the pre-fetched data
         const allEvents = events.flatMap((event) => {
             const occurrences = generateRruleEvents(event);
             return occurrences.map((occurrence, index) =>
-                generateEvent(event, occurrence, index, channelName, guildId)
+                generateEvent(event, occurrence, index, channels, guildId)
             );
         });
 

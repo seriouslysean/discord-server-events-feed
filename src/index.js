@@ -18,8 +18,20 @@ if (!GUILD_ID || !process.env.DSE_DISCORD_BOT_TOKEN) {
             return;
         }
 
-        const channelName = await fetchChannelName(events[0].channel_id);
-        const icsContent = await generateICS({ events, guildId: GUILD_ID, guildName, channelName });
+        // Fetch channel names for all events
+        const channels = {};
+        const channelIds = [...new Set(events.map(e => e.channel_id).filter(Boolean))];
+        
+        for (const channelId of channelIds) {
+            try {
+                channels[channelId] = await fetchChannelName(channelId);
+            } catch (err) {
+                logger.error(`Failed to fetch channel name for ${channelId}: ${err.message}`);
+                channels[channelId] = 'Unknown Channel';
+            }
+        }
+
+        const icsContent = await generateICS({ events, guildId: GUILD_ID, guildName, channels });
         await saveICSFile(icsContent);
 
         logger.info('ICS generation complete!');

@@ -7,16 +7,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: daily-run
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
   build:
-    name: "Daily Run"
+    name: "Generate Feed"
     runs-on: ubuntu-latest
     steps:
       - name: Check out Repository
@@ -31,38 +32,25 @@ jobs:
         run: npm ci
 
       - name: Generate Feed
-        id: generate_feed
         env:
           DSE_DISCORD_GUILD_ID: ${{ secrets.DSE_DISCORD_GUILD_ID }}
           DSE_DISCORD_APPLICATION_ID: ${{ secrets.DSE_DISCORD_APPLICATION_ID }}
           DSE_DISCORD_BOT_TOKEN: ${{ secrets.DSE_DISCORD_BOT_TOKEN }}
           DSE_DISCORD_CALENDAR_HEX_COLOR: ${{ secrets.DSE_DISCORD_CALENDAR_HEX_COLOR }}
-        run: |
-          if npm run generate:feed; then
-            echo "feed_generated=1" >> $GITHUB_OUTPUT
-          else
-            echo "feed_generated=0" >> $GITHUB_OUTPUT
-          fi
+        run: npm run generate:feed
 
-      - name: Configure Git
-        if: steps.generate_feed.outputs.feed_generated == '1'
-        run: |
-          git config user.name "Discord Server Events Feed Workflow"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
 
-      - name: Commit Changes
-        id: commit_changes
-        if: steps.generate_feed.outputs.feed_generated == '1'
-        run: |
-          if git diff --quiet dist/events.ics; then
-            echo "No changes to commit."
-            echo "changes_committed=0" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          git add dist/events.ics
-          git commit -m "Update feed $(date +'%Y-%m-%d')"
-          echo "changes_committed=1" >> $GITHUB_OUTPUT
-
-      - name: Publish
-        if: steps.commit_changes.outputs.changes_committed == '1'
-        run: git push origin main
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

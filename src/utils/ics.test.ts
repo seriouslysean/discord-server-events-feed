@@ -1,18 +1,41 @@
 import { describe, it, expect } from 'vitest';
 import { generateICS } from './ics.js';
+import { DiscordEvent } from './discord.js';
+
+// Helper to create a full DiscordEvent with defaults for testing
+const createFullMockEvent = (overrides: Partial<DiscordEvent>): DiscordEvent => {
+    const defaults: DiscordEvent = {
+        id: 'default-id',
+        guild_id: 'default-guild-id',
+        channel_id: 'default-channel-id',
+        name: 'Default Event',
+        scheduled_start_time: new Date().toISOString(),
+        scheduled_end_time: null,
+        privacy_level: 2,
+        status: 1,
+        entity_type: 2,
+        entity_id: null,
+        entity_metadata: null,
+        recurrence_rule: null,
+        creator_id: 'creator-id',
+        description: 'Default description',
+        user_count: 0,
+        image: null,
+        guild_scheduled_event_exceptions: []
+    };
+    return { ...defaults, ...overrides };
+};
 
 describe('generateICS', () => {
     it('should generate a valid ICS file for a single event', async () => {
-        const mockEvent = {
+        const mockEvent = createFullMockEvent({
             id: '12345',
             name: 'Test Event',
             description: 'This is a test event.',
             scheduled_start_time: '2025-12-25T10:00:00.000Z',
             scheduled_end_time: '2025-12-25T12:00:00.000Z',
             channel_id: '67890',
-            entity_metadata: {},
-            recurrence_rule: null
-        };
+        });
 
         const mockGuildId = 'guild123';
         const mockGuildName = 'Test Guild';
@@ -38,7 +61,7 @@ describe('generateICS', () => {
     });
 
     it('should handle external event location', async () => {
-        const mockEvent = {
+        const mockEvent = createFullMockEvent({
             id: '12346',
             name: 'External Event',
             description: 'This is an external event.',
@@ -48,12 +71,11 @@ describe('generateICS', () => {
             entity_metadata: {
                 location: 'https://example.com/meeting'
             },
-            recurrence_rule: null
-        };
+        });
 
         const mockGuildId = 'guild123';
         const mockGuildName = 'Test Guild';
-        const mockChannels = {}; // No channels needed for external event
+        const mockChannels = {}; 
 
         const icsContent = await generateICS({
             events: [mockEvent],
@@ -67,21 +89,19 @@ describe('generateICS', () => {
     });
 
     it('should handle recurrent events with weekly frequency', async () => {
-        const mockEvent = {
+        const mockEvent = createFullMockEvent({
             id: '12347',
             name: 'Weekly Event',
             description: 'Every week!',
             scheduled_start_time: '2025-12-01T09:00:00.000Z', // Monday
             scheduled_end_time: '2025-12-01T10:00:00.000Z',
             channel_id: 'channel789',
-            entity_metadata: {},
             recurrence_rule: {
                 start: '2025-12-01T09:00:00.000Z',
                 frequency: 2, // Weekly
                 interval: 1
             },
-            guild_scheduled_event_exceptions: []
-        };
+        });
 
         const mockGuildId = 'guild123';
         const mockGuildName = 'Test Guild';
@@ -95,12 +115,10 @@ describe('generateICS', () => {
         });
         
         expect(icsContent).toBeTypeOf('string');
-        // Expect at least 2 events for a weekly recurrence (original + 1 recurrence)
         const eventCount = (icsContent.match(/BEGIN:VEVENT/g) || []).length;
         expect(eventCount).toBeGreaterThanOrEqual(2);
 
-        // Check for specific dates
-        expect(icsContent).toContain('DTSTART:20251201T090000Z'); // Original
-        expect(icsContent).toContain('DTSTART:20251208T090000Z'); // Next week
+        expect(icsContent).toContain('DTSTART:20251201T090000Z'); 
+        expect(icsContent).toContain('DTSTART:20251208T090000Z'); 
     });
 });

@@ -2,19 +2,27 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { logger } from './logger.js';
+import { DiscordEvent } from './discord.js';
 
 const LINE_BREAK = '\r\n';
 const DEFAULT_EVENT_DURATION = 4 * 60 * 60 * 1000; // Default duration: 4 hours
 const MAX_RRULE_EVENTS = 15; // Limit to 15 occurrences
 const DISCORD_CALENDAR_HEX_COLOR = process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE';
 
-const formatDateToICS = (date) => {
+interface EventOccurrence {
+    startDate: string;
+    endDate: string;
+    isException: boolean;
+    exceptionId?: string;
+}
+
+const formatDateToICS = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
 };
 
-const generateRruleEvents = (event) => {
+const generateRruleEvents = (event: DiscordEvent): EventOccurrence[] => {
     try {
-        const occurrences = [];
+        const occurrences: EventOccurrence[] = [];
         
         // Calculate duration for this specific event
         const startTime = new Date(event.scheduled_start_time).getTime();
@@ -36,7 +44,7 @@ const generateRruleEvents = (event) => {
 
         // Calculate the ending time for our 15 event window
         // We need to generate enough regular dates to account for exceptions
-        const regularOccurrences = [];
+        const regularOccurrences: Date[] = [];
         const frequency = event.recurrence_rule.frequency;
         const interval = event.recurrence_rule.interval || 1;
 
@@ -66,19 +74,20 @@ const generateRruleEvents = (event) => {
         }
 
         // Create a map of exceptions by their reference date
-        const exceptions = new Map();
+        const exceptions = new Map<number, NonNullable<DiscordEvent['guild_scheduled_event_exceptions']>[0]>();
         if (event.guild_scheduled_event_exceptions) {
             for (const exception of event.guild_scheduled_event_exceptions) {
                 const exceptionDate = new Date(exception.scheduled_start_time);
 
                 // Find the closest regular occurrence to this exception
-                const closestDate = regularOccurrences.reduce((closest, date) => {
-                    const currentDiff = Math.abs(date.getTime() - exceptionDate.getTime());
-                    const closestDiff = Math.abs(closest.getTime() - exceptionDate.getTime());
-                    return currentDiff < closestDiff ? date : closest;
-                });
-
-                exceptions.set(closestDate.getTime(), exception);
+                if (regularOccurrences.length > 0) {
+                     const closestDate = regularOccurrences.reduce((closest, date) => {
+                        const currentDiff = Math.abs(date.getTime() - exceptionDate.getTime());
+                        const closestDiff = Math.abs(closest.getTime() - exceptionDate.getTime());
+                        return currentDiff < closestDiff ? date : closest;
+                    });
+                    exceptions.set(closestDate.getTime(), exception);
+                }
             }
         }
 
@@ -117,15 +126,16 @@ const generateRruleEvents = (event) => {
 
         return occurrences;
     } catch (error) {
-        throw new Error(`Failed to generate rule events: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate rule events: ${message}`);
     }
 };
 
-const generateEventUID = (start, end, title, id) => {
+const generateEventUID = (start: string, end: string, title: string, id: string): string => {
     return `${crypto.createHash('md5').update(`${start}${end}${title}${id}`).digest('hex').slice(0, 8)}@discord-events`;
 };
 
-const generateEvent = (event, occurrence, index, channels, guildId) => {
+const generateEvent = (event: DiscordEvent, occurrence: EventOccurrence, index: number, channels: Record<string, string>, guildId: string): string => {
     try {
         let location = '';
         if (event.entity_metadata?.location) {
@@ -155,11 +165,19 @@ const generateEvent = (event, occurrence, index, channels, guildId) => {
             'END:VEVENT',
         ].join(LINE_BREAK);
     } catch (error) {
-        throw new Error(`Failed to generate event: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate event: ${message}`);
     }
 };
 
-export const generateICS = async ({ events, guildId, guildName, channels }) => {
+interface GenerateICSParams {
+    events: DiscordEvent[];
+    guildId: string;
+    guildName: string;
+    channels: Record<string, string>;
+}
+
+export const generateICS = async ({ events, guildId, guildName, channels }: GenerateICSParams): Promise<string> => {
     try {
         // Generate all events with the pre-fetched data
         const allEvents = events.flatMap((event) => {
@@ -182,17 +200,19 @@ export const generateICS = async ({ events, guildId, guildName, channels }) => {
             'END:VCALENDAR',
         ].join(LINE_BREAK);
     } catch (error) {
-        throw new Error(`Failed to generate ICS: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate ICS: ${message}`);
     }
 };
 
-export const saveICSFile = async (icsContent) => {
+export const saveICSFile = async (icsContent: string): Promise<void> => {
     try {
         const filePath = './dist/events.ics';
         await fs.mkdir(path.dirname(filePath), { recursive: true });
         await fs.writeFile(filePath, icsContent);
         logger.info('ICS file saved successfully');
     } catch (error) {
-        throw new Error(`Failed to save ICS file: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to save ICS file: ${message}`);
     }
 };

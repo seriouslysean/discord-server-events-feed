@@ -1,6 +1,7 @@
 import { fetchScheduledEvents, fetchGuildName, fetchChannelName } from './utils/discord.js';
 import { generateICS, saveICSFile } from './utils/ics.js';
 import { logger } from './utils/logger.js';
+import axios from 'axios';
 
 const GUILD_ID = process.env.DSE_DISCORD_GUILD_ID;
 
@@ -19,14 +20,15 @@ if (!GUILD_ID || !process.env.DSE_DISCORD_BOT_TOKEN) {
         }
 
         // Fetch channel names for all events
-        const channels = {};
-        const channelIds = [...new Set(events.map(e => e.channel_id).filter(Boolean))];
+        const channels: Record<string, string> = {};
+        const channelIds = [...new Set(events.map(e => e.channel_id).filter(Boolean) as string[])];
         
         for (const channelId of channelIds) {
             try {
                 channels[channelId] = await fetchChannelName(channelId);
             } catch (err) {
-                logger.error(`Failed to fetch channel name for ${channelId}: ${err.message}`);
+                const message = err instanceof Error ? err.message : String(err);
+                logger.error(`Failed to fetch channel name for ${channelId}: ${message}`);
                 channels[channelId] = 'Unknown Channel';
             }
         }
@@ -36,10 +38,11 @@ if (!GUILD_ID || !process.env.DSE_DISCORD_BOT_TOKEN) {
 
         logger.info('ICS generation complete!');
     } catch (error) {
-        if (error.isAxiosError) {
-            logger.error('Discord API Error:', error.response?.data?.message || error.message);
+        if (axios.isAxiosError(error)) {
+             logger.error('Discord API Error:', error.response?.data?.message || error.message);
         } else {
-            logger.error('Error:', error.message);
+            const message = error instanceof Error ? error.message : String(error);
+            logger.error('Error:', message);
         }
         process.exit(1);
     }

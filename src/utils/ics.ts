@@ -17,7 +17,7 @@ interface EventOccurrence {
 const formatDateToICS = (date: Date): string =>
     date.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
 
-const generateRruleEvents = (event: DiscordEvent): EventOccurrence[] => {
+const generateRruleEvents = (event: DiscordEvent, now: Date = new Date()): EventOccurrence[] => {
     const startTime = new Date(event.scheduled_start_time).getTime();
     const endTime = event.scheduled_end_time ? new Date(event.scheduled_end_time).getTime() : null;
     const duration = endTime ? (endTime - startTime) : config.calendar.defaultEventDurationMs;
@@ -38,20 +38,28 @@ const generateRruleEvents = (event: DiscordEvent): EventOccurrence[] => {
     const { frequency, interval = 1 } = event.recurrence_rule;
     let currentDate = new Date(event.recurrence_rule.start);
 
-    while (regularOccurrences.length < config.calendar.maxRruleEvents) {
-        regularOccurrences.push(new Date(currentDate));
-        const nextDate = new Date(currentDate);
-
+    const advanceDate = (date: Date): Date => {
+        const nextDate = new Date(date);
         // 0: Yearly, 1: Monthly, 2: Weekly, 3: Daily
         switch (frequency) {
             case 0: nextDate.setUTCFullYear(nextDate.getUTCFullYear() + interval); break;
             case 1: nextDate.setUTCMonth(nextDate.getUTCMonth() + interval); break;
             case 2: nextDate.setUTCDate(nextDate.getUTCDate() + (interval * 7)); break;
             case 3: nextDate.setUTCDate(nextDate.getUTCDate() + interval); break;
-            default: nextDate.setUTCDate(nextDate.getUTCDate() + (interval * 7)); // Default to weekly
+            default: nextDate.setUTCDate(nextDate.getUTCDate() + (interval * 7));
         }
+        return nextDate;
+    };
 
-        currentDate = nextDate;
+    // Fast-forward to first occurrence at or after today
+    while (currentDate < now) {
+        currentDate = advanceDate(currentDate);
+    }
+
+    // Generate future occurrences
+    while (regularOccurrences.length < config.calendar.maxRruleEvents) {
+        regularOccurrences.push(new Date(currentDate));
+        currentDate = advanceDate(currentDate);
     }
 
     // Map exceptions by their closest regular occurrence
@@ -137,11 +145,12 @@ interface GenerateICSParams {
     guildId: string;
     guildName: string;
     channels: Record<string, string>;
+    now?: Date;
 }
 
-export const generateICS = ({ events, guildId, guildName, channels }: GenerateICSParams): string => {
+export const generateICS = ({ events, guildId, guildName, channels, now = new Date() }: GenerateICSParams): string => {
     const allEvents = events.flatMap((event) => {
-        const occurrences = generateRruleEvents(event);
+        const occurrences = generateRruleEvents(event, now);
         return occurrences.map((occurrence, index) =>
             generateEvent(event, occurrence, index, channels, guildId)
         );

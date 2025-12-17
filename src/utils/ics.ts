@@ -166,3 +166,14 @@ export const saveICSFile = async (icsContent: string): Promise<void> => {
     await fs.writeFile(config.output.filePath, icsContent);
     logger.info('ICS file saved successfully');
 };
+
+export const copyPublicAssets = async (): Promise<void> => {
+    const publicDir = new URL('../public', import.meta.url).pathname;
+    const distDir = path.dirname(config.output.filePath);
+
+    const files = await fs.readdir(publicDir);
+    for (const file of files) {
+        await fs.copyFile(path.join(publicDir, file), path.join(distDir, file));
+    }
+    logger.info(`Copied ${files.length} public assets to dist`);
+};

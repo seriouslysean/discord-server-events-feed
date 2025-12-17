@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Server Events Feed</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+        .url-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.875rem;
+            font-family: monospace;
+        }
+        input:focus { outline: none; border-color: #5865F2; }
+        button {
+            padding: 0.75rem 1.25rem;
+            background: #5865F2;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        button:hover { background: #4752C4; }
+        button.copied { background: #3ba55c; }
+        .hint {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .hint a { color: #5865F2; text-decoration: none; }
+        .hint a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Discord Server Events Feed</h1>
+        <div class="url-group">
+            <input type="text" id="url" readonly>
+            <button id="copy">Copy</button>
+        </div>
+        <p class="hint">
+            Add this URL to your calendar app, or <a id="download" href="">download the file</a>.
+        </p>
+    </div>
+    <script>
+        const feedUrl = `${window.location.origin}${window.location.pathname}events.ics`;
+        document.getElementById('url').value = feedUrl;
+        document.getElementById('download').href = feedUrl;
+
+        document.getElementById('copy').addEventListener('click', async (e) => {
+            await navigator.clipboard.writeText(feedUrl);
+            e.target.textContent = 'Copied!';
+            e.target.classList.add('copied');
+            setTimeout(() => {
+                e.target.textContent = 'Copy';
+                e.target.classList.remove('copied');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

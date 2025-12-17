@@ -1,6 +1,6 @@
 import { config } from './config.js';
 import { fetchScheduledEvents, fetchGuildName, fetchChannelName } from './utils/discord.js';
-import { generateICS, saveICSFile } from './utils/ics.js';
+import { generateICS, saveICSFile, copyPublicAssets } from './utils/ics.js';
 import { logger, getErrorMessage } from './utils/logger.js';
 
 const main = async (): Promise<void> => {
@@ -32,6 +32,7 @@ const main = async (): Promise<void> => {
         channels,
     });
     await saveICSFile(icsContent);
+    await copyPublicAssets();
 
     logger.info('ICS generation complete!');
 };

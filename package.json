@@ -17,11 +17,11 @@
     "*.ts": "bash -c 'npm run type-check'"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/seriouslysean/discord-server-events.git"
+    "url": "git+ssh://git@github.com/seriouslysean/discord-server-events-feed.git"
   },
   "keywords": [
     "nodejs",

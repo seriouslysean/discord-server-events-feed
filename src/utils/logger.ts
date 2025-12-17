@@ -4,3 +4,6 @@ export const logger = {
     error: (...args: unknown[]) => { console.error('[DSEF]', ...args); },
     debug: (...args: unknown[]) => { console.debug('[DSEF]', ...args); },
 };
+
+export const getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : String(error);

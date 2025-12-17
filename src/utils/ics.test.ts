@@ -1,6 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { DiscordEvent } from '../types.js';
+
+// Mock the config module before importing ics
+vi.mock('../config.js', () => ({
+    config: {
+        calendar: {
+            hexColor: '#6D87BE',
+            defaultEventDurationMs: 4 * 60 * 60 * 1000,
+            maxRruleEvents: 15,
+        },
+        output: {
+            filePath: './dist/events.ics',
+        },
+    },
+}));
+
 import { generateICS } from './ics.js';
-import { DiscordEvent } from './discord.js';
 
 // Helper to create a full DiscordEvent with defaults for testing
 const createFullMockEvent = (overrides: Partial<DiscordEvent>): DiscordEvent => {
@@ -27,7 +42,7 @@ const createFullMockEvent = (overrides: Partial<DiscordEvent>): DiscordEvent => 
 };
 
 describe('generateICS', () => {
-    it('should generate a valid ICS file for a single event', async () => {
+    it('should generate a valid ICS file for a single event', () => {
         const mockEvent = createFullMockEvent({
             id: '12345',
             name: 'Test Event',
@@ -41,7 +56,7 @@ describe('generateICS', () => {
         const mockGuildName = 'Test Guild';
         const mockChannels = { '67890': 'Test Channel' };
 
-        const icsContent = await generateICS({
+        const icsContent = generateICS({
             events: [mockEvent],
             guildId: mockGuildId,
             guildName: mockGuildName,
@@ -60,7 +75,7 @@ describe('generateICS', () => {
         expect(icsContent).toContain('END:VCALENDAR');
     });
 
-    it('should handle external event location', async () => {
+    it('should handle external event location', () => {
         const mockEvent = createFullMockEvent({
             id: '12346',
             name: 'External Event',
@@ -75,9 +90,9 @@ describe('generateICS', () => {
 
         const mockGuildId = 'guild123';
         const mockGuildName = 'Test Guild';
-        const mockChannels = {}; 
+        const mockChannels = {};
 
-        const icsContent = await generateICS({
+        const icsContent = generateICS({
             events: [mockEvent],
             guildId: mockGuildId,
             guildName: mockGuildName,
@@ -88,7 +103,7 @@ describe('generateICS', () => {
         expect(icsContent).toContain('LOCATION:https://example.com/meeting');
     });
 
-    it('should handle recurrent events with weekly frequency', async () => {
+    it('should handle recurrent events with weekly frequency', () => {
         const mockEvent = createFullMockEvent({
             id: '12347',
             name: 'Weekly Event',
@@ -107,7 +122,7 @@ describe('generateICS', () => {
         const mockGuildName = 'Test Guild';
         const mockChannels = { 'channel789': 'Recurrent Channel' };
 
-        const icsContent = await generateICS({
+        const icsContent = generateICS({
             events: [mockEvent],
             guildId: mockGuildId,
             guildName: mockGuildName,

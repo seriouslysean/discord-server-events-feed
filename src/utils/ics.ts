@@ -14,8 +14,24 @@ interface EventOccurrence {
     exceptionId?: string;
 }
 
-const formatDateToICS = (date: Date): string =>
-    date.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+// Format date in configured timezone for ICS (YYYYMMDDTHHMMSS without Z)
+const formatDateToICS = (date: Date, timezone: string = config.calendar.timezone): string => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+    });
+
+    const parts = formatter.formatToParts(date);
+    const get = (type: string) => parts.find(p => p.type === type)?.value ?? '00';
+
+    return `${get('year')}${get('month')}${get('day')}T${get('hour')}${get('minute')}${get('second')}`;
+};
 
 const generateRruleEvents = (event: DiscordEvent, now: Date = new Date()): EventOccurrence[] => {
     const startTime = new Date(event.scheduled_start_time).getTime();
@@ -126,12 +142,14 @@ const generateEvent = (
         occurrence.isException ? `${event.id}-${occurrence.exceptionId}` : `${event.id}-${index}`
     );
 
+    const tz = config.calendar.timezone;
+
     return [
         'BEGIN:VEVENT',
         `UID:${uid}`,
         `DTSTAMP:${occurrence.startDate}`,
-        `DTSTART:${occurrence.startDate}`,
-        `DTEND:${occurrence.endDate}`,
+        `DTSTART;TZID=${tz}:${occurrence.startDate}`,
+        `DTEND;TZID=${tz}:${occurrence.endDate}`,
         `SUMMARY:${event.name}`,
         `DESCRIPTION:${event.description || 'No description provided.'}`,
         `LOCATION:${location}`,
@@ -163,6 +181,7 @@ export const generateICS = ({ events, guildId, guildName, channels, now = new Da
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         `X-WR-CALNAME:${guildName}`,
+        `X-WR-TIMEZONE:${config.calendar.timezone}`,
         `X-APPLE-CALENDAR-COLOR:${config.calendar.hexColor}`,
         'X-PUBLISHED-TTL:PT1H',
         ...allEvents,

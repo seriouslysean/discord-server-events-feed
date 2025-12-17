@@ -6,6 +6,7 @@ vi.mock('../config.js', () => ({
     config: {
         calendar: {
             hexColor: '#6D87BE',
+            timezone: 'America/New_York',
             defaultEventDurationMs: 4 * 60 * 60 * 1000,
             maxRruleEvents: 15,
         },
@@ -66,12 +67,14 @@ describe('generateICS', () => {
         expect(icsContent).toContain('BEGIN:VCALENDAR');
         expect(icsContent).toContain('VERSION:2.0');
         expect(icsContent).toContain(`PRODID:-//${TEST_GUILD_NAME}//EN`);
+        expect(icsContent).toContain('X-WR-TIMEZONE:America/New_York');
         expect(icsContent).toContain('BEGIN:VEVENT');
         expect(icsContent).toContain('SUMMARY:Single Event');
         expect(icsContent).toContain('DESCRIPTION:This is a single event.');
         expect(icsContent).toContain(`LOCATION:Channel: ${TEST_CHANNEL_NAME}`);
-        expect(icsContent).toContain('DTSTART:20251225T100000Z');
-        expect(icsContent).toContain('DTEND:20251225T120000Z');
+        // 10:00 UTC = 05:00 EST
+        expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251225T050000');
+        expect(icsContent).toContain('DTEND;TZID=America/New_York:20251225T070000');
         expect(icsContent).toContain('END:VEVENT');
         expect(icsContent).toContain('END:VCALENDAR');
     });
@@ -117,10 +120,9 @@ describe('generateICS', () => {
         const eventCount = (icsContent.match(/BEGIN:VEVENT/g) || []).length;
         expect(eventCount).toBe(15);
 
-        // First occurrence should be Dec 1 (the start date, which is >= now)
-        expect(icsContent).toContain('DTSTART:20251201T090000Z');
-        // Second occurrence should be Dec 8
-        expect(icsContent).toContain('DTSTART:20251208T090000Z');
+        // 09:00 UTC = 04:00 EST (Dec 1 is in EST, not EDT)
+        expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251201T040000');
+        expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251208T040000');
     });
 
     it('should skip past recurring events', () => {
@@ -144,8 +146,71 @@ describe('generateICS', () => {
         });
 
         // Should NOT contain November dates (they're in the past)
-        expect(icsContent).not.toContain('DTSTART:202511');
+        expect(icsContent).not.toMatch(/DTSTART;TZID=America\/New_York:202510/);
+        expect(icsContent).not.toMatch(/DTSTART;TZID=America\/New_York:202511/);
         // Should contain December dates (future from TEST_NOW)
-        expect(icsContent).toContain('DTSTART:202512');
+        expect(icsContent).toMatch(/DTSTART;TZID=America\/New_York:202512/);
+    });
+
+    describe('timezone conversion', () => {
+        it('should convert UTC midnight to previous day EST', () => {
+            // UTC midnight = 7 PM EST previous day (EST is UTC-5)
+            const event = createMockEvent({
+                scheduled_start_time: '2025-12-15T00:00:00.000Z',
+                scheduled_end_time: '2025-12-15T01:00:00.000Z',
+            });
+
+            const icsContent = generateICS({
+                events: [event],
+                guildId: TEST_GUILD_ID,
+                guildName: TEST_GUILD_NAME,
+                channels: { [TEST_CHANNEL_ID]: TEST_CHANNEL_NAME },
+                now: TEST_NOW,
+            });
+
+            // 00:00 UTC Dec 15 = 19:00 EST Dec 14
+            expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251214T190000');
+        });
+
+        it('should handle UTC times that stay same day in EST', () => {
+            // UTC 6 PM = 1 PM EST same day
+            const event = createMockEvent({
+                scheduled_start_time: '2025-12-15T18:00:00.000Z',
+                scheduled_end_time: '2025-12-15T20:00:00.000Z',
+            });
+
+            const icsContent = generateICS({
+                events: [event],
+                guildId: TEST_GUILD_ID,
+                guildName: TEST_GUILD_NAME,
+                channels: { [TEST_CHANNEL_ID]: TEST_CHANNEL_NAME },
+                now: TEST_NOW,
+            });
+
+            // 18:00 UTC = 13:00 EST
+            expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251215T130000');
+            expect(icsContent).toContain('DTEND;TZID=America/New_York:20251215T150000');
+        });
+
+        it('should handle late night UTC correctly', () => {
+            // UTC 23:45 = 18:45 EST same day
+            const event = createMockEvent({
+                scheduled_start_time: '2025-12-15T23:45:00.000Z',
+                scheduled_end_time: '2025-12-16T03:45:00.000Z',
+            });
+
+            const icsContent = generateICS({
+                events: [event],
+                guildId: TEST_GUILD_ID,
+                guildName: TEST_GUILD_NAME,
+                channels: { [TEST_CHANNEL_ID]: TEST_CHANNEL_NAME },
+                now: TEST_NOW,
+            });
+
+            // 23:45 UTC Dec 15 = 18:45 EST Dec 15
+            expect(icsContent).toContain('DTSTART;TZID=America/New_York:20251215T184500');
+            // 03:45 UTC Dec 16 = 22:45 EST Dec 15
+            expect(icsContent).toContain('DTEND;TZID=America/New_York:20251215T224500');
+        });
     });
 });

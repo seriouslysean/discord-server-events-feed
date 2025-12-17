@@ -33,7 +33,8 @@ Create a `.env` file for local development:
 DSE_DISCORD_GUILD_ID=your_guild_id
 DSE_DISCORD_APPLICATION_ID=your_application_id
 DSE_DISCORD_BOT_TOKEN=your_bot_token
-DSE_DISCORD_CALENDAR_HEX_COLOR=#6D87BE  # Optional, defaults to Discord blurple
+DSE_DISCORD_CALENDAR_HEX_COLOR=#6D87BE      # Optional, defaults to Discord blurple
+DSE_CALENDAR_TIMEZONE=America/New_York       # Optional, IANA timezone (defaults to America/New_York)
 ```
 
 For GitHub Actions, add these as repository secrets.

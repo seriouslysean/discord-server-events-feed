@@ -14,6 +14,7 @@ export const config = {
     },
     calendar: {
         hexColor: process.env.DSE_DISCORD_CALENDAR_HEX_COLOR ?? '#6D87BE',
+        timezone: process.env.DSE_CALENDAR_TIMEZONE ?? 'America/New_York',
         defaultEventDurationMs: 4 * 60 * 60 * 1000, // 4 hours
         maxRruleEvents: 15,
     },

@@ -1,0 +1,30 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Run every 50 days (before GitHub's 60-day inactivity timeout)
+    # Day 1, 51 of every ~100 day cycle at 00:00 UTC
+    - cron: '0 0 1,21 */2 *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update keepalive timestamp
+        run: |
+          echo "Last keepalive: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > .github/keepalive
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive
+          git diff --staged --quiet || git commit -m "chore: keepalive to prevent workflow disable"
+          git push

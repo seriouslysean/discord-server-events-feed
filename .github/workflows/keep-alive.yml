@@ -2,9 +2,9 @@ name: Keep Alive
 
 on:
   schedule:
-    # Run every 50 days (before GitHub's 60-day inactivity timeout)
-    # Day 1, 51 of every ~100 day cycle at 00:00 UTC
-    - cron: '0 0 1,21 */2 *'
+    # Keep scheduled workflows enabled — GitHub disables them after 60 days of no commits.
+    # Fires on the 1st and 21st of every other month; max gap ~41 days, comfortably under 60.
+    - cron: "0 0 1,21 */2 *"
   workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Update keepalive timestamp
         run: |

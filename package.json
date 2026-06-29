@@ -2,55 +2,45 @@
   "name": "discord-server-events-feed",
   "version": "1.1.0",
   "description": "A simple utility to generate an ICS file for scheduled events in a Discord server.",
-  "main": "src/index.ts",
-  "type": "module",
-  "scripts": {
-    "start": "dotenvx run -- npm run generate:feed",
-    "generate:feed": "tsx ./src/index.ts",
-    "test": "vitest run",
-    "lint": "eslint src/**/*.ts",
-    "type-check": "tsc --noEmit",
-    "prepare": "husky"
+  "keywords": [
+    "calendar",
+    "discord",
+    "discord-bot",
+    "ics",
+    "javascript",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/seriouslysean/discord-server-events-feed#readme",
+  "bugs": {
+    "url": "https://github.com/seriouslysean/discord-server-events-feed/issues"
   },
-  "lint-staged": {
-    "src/**/*.{ts,js}": "eslint",
-    "*.ts": "bash -c 'npm run type-check'"
-  },
-  "engines": {
-    "node": ">=22.0.0"
-  },
+  "license": "MIT",
+  "author": "Sean Kennedy <sean@codeserious.com>",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/seriouslysean/discord-server-events-feed.git"
   },
-  "keywords": [
-    "nodejs",
-    "javascript",
-    "calendar",
-    "discord",
-    "discord-bot",
-    "ics"
-  ],
-  "author": "Sean Kennedy <sean@codeserious.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/seriouslysean/discord-server-events-feed/issues"
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env --import tsx ./src/index.ts",
+    "generate:feed": "tsx ./src/index.ts",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "type-check": "tsc --noEmit"
   },
-  "homepage": "https://github.com/seriouslysean/discord-server-events-feed#readme",
-  "dependencies": {
-    "@dotenvx/dotenvx": "^1.32.0",
-    "axios": "^1.7.9"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.2",
-    "eslint": "^9.39.2",
-    "globals": "^16.5.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.49.0",
-    "vitest": "^4.0.15"
+    "@types/node": "^24",
+    "oxfmt": "^0.56.0",
+    "oxlint": "^1.71.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

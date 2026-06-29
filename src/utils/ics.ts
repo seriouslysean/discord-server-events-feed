@@ -147,6 +147,23 @@ const generateRruleEvents = (event: DiscordEvent, now: Date = new Date()): Event
     ];
   }
 
+  // Warn (don't fail) when an event uses recurrence fields the expansion ignores,
+  // so wrong output surfaces instead of failing silently. See issue #4 and the ADR.
+  const rule = event.recurrence_rule;
+  const unsupported: string[] = [];
+  if (rule.by_weekday && rule.by_weekday.length > 1) unsupported.push("by_weekday (multi-day)");
+  if (rule.by_n_weekday?.length) unsupported.push("by_n_weekday");
+  if (rule.by_month_day?.length) unsupported.push("by_month_day");
+  if (rule.by_month?.length) unsupported.push("by_month");
+  if (rule.by_year_day?.length) unsupported.push("by_year_day");
+  if (rule.count != null) unsupported.push("count");
+  if (rule.end != null) unsupported.push("end");
+  if (unsupported.length > 0) {
+    logger.warn(
+      `Event "${event.name}" uses recurrence fields the expansion doesn't honor (${unsupported.join(", ")}); occurrences may be wrong.`,
+    );
+  }
+
   // Generate regular occurrences based on recurrence rule
   const timezone = config.calendar.timezone;
   const { frequency } = event.recurrence_rule;

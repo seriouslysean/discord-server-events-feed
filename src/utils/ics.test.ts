@@ -388,6 +388,57 @@ describe("DST-safe recurrence", () => {
     expect(count).toBe(14);
     expect(ics).not.toContain("DTSTART;TZID=America/New_York:20251208");
   });
+
+  it("warns when a recurrence uses an unsupported field (multi-day by_weekday)", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const event = createMockEvent({
+      name: "Mon/Wed Event",
+      scheduled_start_time: "2025-12-01T18:00:00.000Z",
+      scheduled_end_time: "2025-12-01T19:00:00.000Z",
+      recurrence_rule: {
+        start: "2025-12-01T18:00:00.000Z",
+        frequency: 2,
+        interval: 1,
+        by_weekday: [0, 2],
+      },
+    });
+
+    generateICS({
+      events: [event],
+      guildId: TEST_GUILD_ID,
+      guildName: TEST_GUILD_NAME,
+      channels: { [TEST_CHANNEL_ID]: TEST_CHANNEL_NAME },
+      now: TEST_NOW,
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith("[DSEF]", expect.stringContaining("by_weekday"));
+    warnSpy.mockRestore();
+  });
+
+  it("does not warn for a supported single-day weekly recurrence", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const event = createMockEvent({
+      scheduled_start_time: "2025-12-07T18:00:00.000Z",
+      scheduled_end_time: "2025-12-07T19:00:00.000Z",
+      recurrence_rule: {
+        start: "2025-12-07T18:00:00.000Z",
+        frequency: 2,
+        interval: 1,
+        by_weekday: [6],
+      },
+    });
+
+    generateICS({
+      events: [event],
+      guildId: TEST_GUILD_ID,
+      guildName: TEST_GUILD_NAME,
+      channels: { [TEST_CHANNEL_ID]: TEST_CHANNEL_NAME },
+      now: TEST_NOW,
+    });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
 });
 
 describe("RFC 5545 escaping and folding", () => {

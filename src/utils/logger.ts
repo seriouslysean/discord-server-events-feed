@@ -2,6 +2,9 @@ export const logger = {
   info: (...args: unknown[]) => {
     console.info("[DSEF]", ...args);
   },
+  warn: (...args: unknown[]) => {
+    console.warn("[DSEF]", ...args);
+  },
   error: (...args: unknown[]) => {
     console.error("[DSEF]", ...args);
   },

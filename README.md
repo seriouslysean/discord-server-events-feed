@@ -13,7 +13,7 @@ A simple utility to generate an ICS calendar feed from Discord server scheduled 
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 24+
 - A Discord bot with access to your server
 - GitHub repository with Pages enabled
 
@@ -31,11 +31,12 @@ Create a `.env` file for local development:
 
 ```env
 DSE_DISCORD_GUILD_ID=your_guild_id
-DSE_DISCORD_APPLICATION_ID=your_application_id
 DSE_DISCORD_BOT_TOKEN=your_bot_token
 DSE_DISCORD_CALENDAR_HEX_COLOR=#6D87BE      # Optional, defaults to Discord blurple
 DSE_CALENDAR_TIMEZONE=America/New_York       # Optional, IANA timezone (defaults to America/New_York)
 ```
+
+The application ID is only used to build the bot-invite URL during setup; it is not read at runtime.
 
 For GitHub Actions, add these as repository secrets.
 
@@ -63,7 +64,7 @@ npm run lint
 1. Fork or clone this repository
 2. Add your Discord secrets to repository settings
 3. Enable GitHub Pages with "GitHub Actions" as the source
-4. The workflow runs automatically on Monday and Thursday at midnight UTC
+4. The workflow runs automatically every 6 hours and only deploys when the feed content changes
 5. Manually trigger via Actions → Generate Feed → Run workflow
 
 ## Usage

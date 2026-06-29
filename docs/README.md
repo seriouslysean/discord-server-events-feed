@@ -12,44 +12,48 @@ Discord doesn’t provide a built-in way to subscribe to server events in extern
 ## Setup
 
 ### 1. **Create a Discord Application**
-   - Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
-   - Under the **Bot** tab, create a bot and copy its token. This will be used as `DSE_DISCORD_BOT_TOKEN`.
+
+- Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
+- Under the **Bot** tab, create a bot and copy its token. This will be used as `DSE_DISCORD_BOT_TOKEN`.
 
 ### 2. **Gather Required IDs**
-   - Enable **Developer Mode** in Discord:
-     - Go to `Settings > Advanced > Developer Mode` and toggle it on.
-   - Right-click your server’s name and select **Copy ID**. This will be your `DSE_DISCORD_GUILD_ID`.
-   - Note your application’s **Client ID**, which you’ll use for bot permissions.
+
+- Enable **Developer Mode** in Discord:
+  - Go to `Settings > Advanced > Developer Mode` and toggle it on.
+- Right-click your server’s name and select **Copy ID**. This will be your `DSE_DISCORD_GUILD_ID`.
+- Note your application’s **Client ID**, which you’ll use for bot permissions.
 
 ### 3. **Set Permissions and Invite the Bot**
-   - The bot needs:
-     - `View Channels`
-     - `Manage Events`
-   - Use this URL to invite the bot to your server, replacing `<YOUR_APPLICATION_ID>` with your Client ID:
-     ```
-     https://discord.com/oauth2/authorize?client_id=<YOUR_APPLICATION_ID>&permissions=8589935616&scope=bot
-     ```
+
+- The bot needs:
+  - `View Channels`
+  - `Manage Events`
+- Use this URL to invite the bot to your server, replacing `<YOUR_APPLICATION_ID>` with your Client ID:
+  ```
+  https://discord.com/oauth2/authorize?client_id=<YOUR_APPLICATION_ID>&permissions=8589935616&scope=bot
+  ```
 
 ### 4. **Configure Environment Variables**
-   - Copy the provided `.env.example` file to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Edit the `.env` file with your IDs and bot token:
-     ```env
-     DSE_DISCORD_GUILD_ID=<YOUR_SERVER_ID>
-     DSE_DISCORD_APPLICATION_ID=<YOUR_APPLICATION_ID>
-     DSE_DISCORD_BOT_TOKEN=<YOUR_BOT_TOKEN>
-     ```
+
+- Copy the provided `.env.example` file to `.env`:
+  ```bash
+  cp .env.example .env
+  ```
+- Edit the `.env` file with your IDs and bot token:
+  ```env
+  DSE_DISCORD_GUILD_ID=<YOUR_SERVER_ID>
+  DSE_DISCORD_BOT_TOKEN=<YOUR_BOT_TOKEN>
+  ```
 
 ### 5. **Install Dependencies and Run**
-   - Clone the repository and install dependencies:
-     ```bash
-     git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME.git
-     cd YOUR_REPOSITORY_NAME
-     npm install
-     ```
-   - Run `npm start` to generate the `.ics` file. The `.ics` file will be saved in the `dist` folder.
+
+- Clone the repository and install dependencies:
+  ```bash
+  git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME.git
+  cd YOUR_REPOSITORY_NAME
+  npm install
+  ```
+- Run `npm start` to generate the `.ics` file. The `.ics` file will be saved in the `dist` folder.
 
 ## Subscribe to Calendar
 

@@ -1,43 +1,47 @@
-import { config } from './config.js';
-import { fetchScheduledEvents, fetchGuildName, fetchChannelName } from './utils/discord.js';
-import { generateICS, saveICSFile, copyPublicAssets } from './utils/ics.js';
-import { logger, getErrorMessage } from './utils/logger.js';
+import { config } from "./config.js";
+import { fetchScheduledEvents, fetchGuildName, fetchChannelName } from "./utils/discord.js";
+import { generateICS, saveICSFile, copyPublicAssets } from "./utils/ics.js";
+import { logger, getErrorMessage } from "./utils/logger.js";
 
 const main = async (): Promise<void> => {
-    const guildName = await fetchGuildName(config.discord.guildId);
-    const events = await fetchScheduledEvents(config.discord.guildId);
+  // Guild name and the event list are independent requests — fetch concurrently.
+  const [guildName, events] = await Promise.all([
+    fetchGuildName(config.discord.guildId),
+    fetchScheduledEvents(config.discord.guildId),
+  ]);
 
-    if (!events?.length) {
-        logger.info('No events found to process.');
-        return;
-    }
+  if (!events?.length) {
+    logger.info("No events found to process.");
+    return;
+  }
 
-    // Fetch channel names for all events
-    const channels: Record<string, string> = {};
-    const channelIds = [...new Set(events.map(e => e.channel_id).filter(Boolean) as string[])];
+  // Resolve all distinct channel names concurrently, degrading per-channel on failure.
+  const channelIds = [...new Set(events.map((e) => e.channel_id).filter(Boolean) as string[])];
+  const channelEntries = await Promise.all(
+    channelIds.map(async (channelId): Promise<[string, string]> => {
+      try {
+        return [channelId, await fetchChannelName(channelId)];
+      } catch (err) {
+        logger.error(`Failed to fetch channel name for ${channelId}: ${getErrorMessage(err)}`);
+        return [channelId, "Unknown Channel"];
+      }
+    }),
+  );
+  const channels: Record<string, string> = Object.fromEntries(channelEntries);
 
-    for (const channelId of channelIds) {
-        try {
-            channels[channelId] = await fetchChannelName(channelId);
-        } catch (err) {
-            logger.error(`Failed to fetch channel name for ${channelId}: ${getErrorMessage(err)}`);
-            channels[channelId] = 'Unknown Channel';
-        }
-    }
+  const icsContent = generateICS({
+    events,
+    guildId: config.discord.guildId,
+    guildName,
+    channels,
+  });
+  await saveICSFile(icsContent);
+  await copyPublicAssets();
 
-    const icsContent = generateICS({
-        events,
-        guildId: config.discord.guildId,
-        guildName,
-        channels,
-    });
-    await saveICSFile(icsContent);
-    await copyPublicAssets();
-
-    logger.info('ICS generation complete!');
+  logger.info("ICS generation complete!");
 };
 
 main().catch((error) => {
-    logger.error('Error:', getErrorMessage(error));
-    process.exit(1);
+  logger.error("Error:", getErrorMessage(error));
+  process.exit(1);
 });

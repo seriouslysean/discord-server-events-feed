@@ -4,6 +4,9 @@ on:
   # Every 6 hours
   schedule:
     - cron: "0 */6 * * *"
+  # Deploy promptly after a merge to main, still gated on a real content change.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

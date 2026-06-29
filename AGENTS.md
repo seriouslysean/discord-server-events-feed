@@ -48,7 +48,7 @@ Discord API → fetchScheduledEvents() → generateICS() → dist/events.ics →
 
 ## Known limitations
 
-Recurrence expansion uses only `frequency` + `interval`, plus per-occurrence exceptions (rescheduled and canceled). Not yet applied: `by_weekday` (multi-day-per-week), `by_n_weekday`, `by_month_day`, `count`, and `end`; monthly recurrence on days 29–31 can drift into the next month. Occurrences are capped at 15. The current server's events don't exercise these. A recurring event anchored exactly inside the spring-forward gap hour (2–3 AM) resolves to an adjacent valid time. Only HTTP 429 is retried — transient 5xx and hung requests are not (the Actions job timeout is the backstop).
+Recurrence expansion uses only `frequency` + `interval`, plus per-occurrence exceptions (rescheduled and canceled). Not yet applied: `by_weekday` (multi-day-per-week), `by_n_weekday`, `by_month_day`, `count`, and `end`; monthly recurrence on days 29–31 can drift into the next month. Occurrences are capped at 15. The current server's events don't exercise these, and an event that does logs a warning at generation time. The decision to keep pre-expansion (and when to revisit) is recorded in [docs/adr/0001-recurrence-pre-expansion-vs-rrule.md](docs/adr/0001-recurrence-pre-expansion-vs-rrule.md); the migration is tracked in issue #4. A recurring event anchored exactly inside the spring-forward gap hour (2–3 AM) resolves to an adjacent valid time. Only HTTP 429 is retried — transient 5xx and hung requests are not (the Actions job timeout is the backstop).
 
 ## Environment variables
 

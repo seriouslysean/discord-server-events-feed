@@ -44,7 +44,7 @@ For GitHub Actions, add these as repository secrets.
 
 ```bash
 # Install dependencies
-npm install
+npm ci
 
 # Generate the feed locally
 npm start

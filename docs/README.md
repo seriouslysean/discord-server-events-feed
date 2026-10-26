@@ -51,7 +51,7 @@ Discord doesn’t provide a built-in way to subscribe to server events in extern
   ```bash
   git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME.git
   cd YOUR_REPOSITORY_NAME
-  npm install
+  npm ci
   ```
 - Run `npm start` to generate the `.ics` file. The `.ics` file will be saved in the `dist` folder.
 

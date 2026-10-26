@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI coding agents working in this repository. Human-facing setup lives in [README.md](README.md). This is the single source of truth for agents; `CLAUDE.md` is a symlink to this file.
+Guidance for AI coding agents working in this repository. Human-facing setup lives in [README.md](README.md). This is the single source of truth for agents; `CLAUDE.md` imports it.
 
 ## Project
 

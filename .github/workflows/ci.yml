@@ -65,7 +65,7 @@ jobs:
   # Dependabot's stay open for a person. A new PR job goes in needs: too, or
   # this merges before it finishes.
   automerge:
-    name: 'Dependabot auto-merge'
+    name: "Dependabot auto-merge"
     needs: [lint, typecheck, test]
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -73,10 +73,10 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: 'Read the update type'
+      - name: "Read the update type"
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-      - name: 'Merge minor and patch updates'
+      - name: "Merge minor and patch updates"
         id: merge
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         env:

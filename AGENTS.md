@@ -63,6 +63,8 @@ Set `DSE_CALENDAR_TIMEZONE` to the event creator's timezone, or any timezone sha
 
 There are **no git hooks**. CI (`.github/workflows/ci.yml`) is the enforcement layer — it runs lint, format check, type-check, and tests on every push to `main` and every PR. Run `just check` locally before pushing to mirror it.
 
+Before writing or changing a test, read https://github.com/splitleafhq/.github/blob/main/docs/testing.md.
+
 ## Version control: colocated jj
 
 This repo is developed with [Jujutsu (jj)](https://jj-vcs.github.io/jj/) colocated alongside git; `.git` stays authoritative.

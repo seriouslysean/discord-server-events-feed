@@ -59,9 +59,9 @@ Optional: `DSE_DISCORD_CALENDAR_HEX_COLOR` (default `#6D87BE`), `DSE_CALENDAR_TI
 
 Set `DSE_CALENDAR_TIMEZONE` to the event creator's timezone, or any timezone sharing its DST schedule. Times are absolute instants; the feed renders them in this timezone with `TZID` and subscribers' apps convert automatically, so the value only affects recurrence anchoring across DST. For a US-Central creator with US subscribers, any US timezone is equivalent (shared DST dates). A creator in a zone with different DST rules (e.g. Arizona, most of Europe) would need this set to their zone or recurrences could drift an hour across a mismatched transition.
 
-## Quality gates (no git hooks)
+## Quality gates
 
-There are **no git hooks**. CI (`.github/workflows/ci.yml`) is the enforcement layer — it runs lint, format check, type-check, and tests on every push to `main` and every PR. Run `just check` locally before pushing to mirror it.
+CI (`.github/workflows/ci.yml`) is the enforcement layer — it runs lint, format check, type-check, and tests on every push to `main` and every PR. A Lefthook `pre-push` hook (`lefthook.yml`) runs the same four steps as `just check` before every `git push`; `npm install` or `npm ci` installs it, through the `prepare` script. Never skip it.
 
 Before writing or changing a test, read https://github.com/splitleafhq/.github/blob/main/docs/testing.md.
 

@@ -29,11 +29,12 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepare": "lefthook install"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^24",
+    "lefthook": "^2.2.2",
     "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",
     "tsx": "^4.23.15",

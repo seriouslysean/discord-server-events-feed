@@ -82,7 +82,7 @@ This repo is developed with [Jujutsu (jj)](https://jj-vcs.github.io/jj/) colocat
 2. Detects whether the feed differs from the currently-published one (fetches the live Pages URL; a missing or failed fetch counts as changed).
 3. Deploys `dist/` to GitHub Pages **only when the content changed**.
 
-`keep-alive.yml` commits a timestamp bimonthly so GitHub doesn't disable the scheduled workflows after 60 days of no commits.
+`keep-alive.yml` re-enables the scheduled workflows through the API bimonthly, so GitHub doesn't disable them after 60 days of no repository activity. It makes no commit: the ruleset refuses direct commits to `main`.
 
 ## Commits & PRs
 

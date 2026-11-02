@@ -2,7 +2,7 @@ name: Keep Alive
 
 on:
   schedule:
-    # Keep scheduled workflows enabled — GitHub disables them after 60 days of no commits.
+    # Keep scheduled workflows enabled — GitHub disables them after 60 days of no repository activity.
     # Fires on the 1st and 21st of every other month; max gap ~41 days, comfortably under 60.
     - cron: "0 0 1,21 */2 *"
   workflow_dispatch:
@@ -10,21 +10,16 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
-      contents: write
+      actions: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Update keepalive timestamp
+      # The ruleset refuses a direct commit to main, so this re-enables through the API instead.
+      - name: Re-enable the scheduled workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Last keepalive: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > .github/keepalive
-
-      - name: Commit and push if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/keepalive
-          git diff --staged --quiet || git commit -m "chore: keepalive to prevent workflow disable"
-          git push
+          for workflow in generate-feed.yml keep-alive.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$workflow/enable"
+          done

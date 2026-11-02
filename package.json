@@ -29,8 +29,7 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "type-check": "tsc --noEmit",
-    "prepare": "lefthook install"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^24",

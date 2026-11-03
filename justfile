@@ -30,7 +30,8 @@ test:
     npm test
 
 # Run every check CI runs: lint, formatting, types, tests
-check: lint format-check typecheck test
+check:
+    scripts/check
 
 # Generate the ICS feed locally (loads .env if present)
 generate:

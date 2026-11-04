@@ -61,7 +61,7 @@ Set `DSE_CALENDAR_TIMEZONE` to the event creator's timezone, or any timezone sha
 
 ## Quality gates
 
-CI (`.github/workflows/ci.yml`) is the enforcement layer — it runs lint, format check, type-check, and tests on every push to `main` and every PR. A Lefthook `pre-push` hook (`lefthook.yml`) runs the same four steps as `just check` before every `git push`; `npm ci` installs it, through lefthook's own postinstall script; if it is missing, run `npx lefthook install`. Never skip it.
+CI (`.github/workflows/ci.yml`) is the enforcement layer — it runs lint, format check, type-check, and tests on every push to `main` and every PR. `scripts/check` runs the same four steps (`just check` calls it), and `.githooks/pre-push` runs it before every `git push`. Enable the hook once per clone with `git config core.hooksPath .githooks`. Never skip it.
 
 Before writing or changing a test, read https://github.com/splitleafhq/.github/blob/main/docs/testing.md.
 

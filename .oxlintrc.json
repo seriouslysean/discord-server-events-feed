@@ -3,5 +3,8 @@
   "categories": {
     "correctness": "error"
   },
+  "options": {
+    "denyWarnings": true
+  },
   "ignorePatterns": ["dist"]
 }
